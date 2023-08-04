@@ -1,12 +1,15 @@
 package com.ljh;
 
-
+import com.ljh.discovery.Registry;
+import com.ljh.discovery.RegistryConfig;
+import com.ljh.untils.network.NetUtils;
+import com.ljh.untils.zookeeper.ZookeeperNode;
+import com.ljh.untils.zookeeper.ZookeeperUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZooKeeper;
 
 import java.util.List;
-
 
 /**
  * @author ljh
@@ -16,6 +19,13 @@ import java.util.List;
 public class RpcBootstrap {
 
 
+    // 定义相关的一些基础配置
+    private String applicationName = "default";
+    private ProtocolConfig protocolConfig;
+    private int port = 8088;
+
+    private Registry registry ;
+
 
     private static RpcBootstrap rpcBootstrap = new RpcBootstrap();
 
@@ -24,6 +34,7 @@ public class RpcBootstrap {
 
 
     public static RpcBootstrap getInstance() {
+
 
         return rpcBootstrap;
     }
@@ -36,6 +47,7 @@ public class RpcBootstrap {
      */
     public RpcBootstrap application(String appName) {
 
+        this.applicationName = appName;
         return this;
     }
 
@@ -46,6 +58,9 @@ public class RpcBootstrap {
      */
     public RpcBootstrap registry(RegistryConfig registryConfig) {
 
+
+        Registry registry = registryConfig.getRegistry();
+        this.registry = registry;
         return this;
     }
 
@@ -56,7 +71,13 @@ public class RpcBootstrap {
      */
     public RpcBootstrap protocol(ProtocolConfig protocolConfig){
 
-        log.info("dsdsd");
+        this.protocolConfig = protocolConfig;
+
+        if (log.isDebugEnabled()){
+
+        log.info("当前工程使用了jdk");
+
+        }
 
         return this;
     }
@@ -67,6 +88,9 @@ public class RpcBootstrap {
      * @return
      */
     public RpcBootstrap publish(ServiceConfig<?> service) {
+
+
+        registry.register(service);
 
         return this;
     }
@@ -86,6 +110,11 @@ public class RpcBootstrap {
      */
     public void start() {
 
+        try {
+            Thread.sleep(100000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public RpcBootstrap reference(ReferenceConfig<?> reference) {

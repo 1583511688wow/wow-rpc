@@ -1,6 +1,7 @@
 package com.ljh;
 
 import com.ljh.Impl.HelloImpl;
+import com.ljh.discovery.RegistryConfig;
 import com.ljh.test.HelloRpc;
 
 /**
@@ -20,7 +21,7 @@ public class Application {
         // 启动 rpc启动器 传入了应用名，注册中心地址，协议的信息以及服务的信息等。
         RpcBootstrap.getInstance()
                 .application("first-dubbo-provider")
-                .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
+                .registry(new RegistryConfig("zookeeper://192.168.123.6:2181"))
                 .protocol(new ProtocolConfig("dubbo"))
                 .publish(service)
                 .start();

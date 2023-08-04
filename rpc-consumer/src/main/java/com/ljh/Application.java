@@ -1,5 +1,6 @@
 package com.ljh;
 
+import com.ljh.discovery.RegistryConfig;
 import com.ljh.test.HelloRpc;
 
 /**
