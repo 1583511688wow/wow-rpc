@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-
-    <property name="pattern" value="%d{HH:mm:ss.SSS} %msg%n"/>
-
-    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-        <!--输出流对象 默认 System.out 改为 System.err-->
-        <target>System.out</target>
-        <!--日志格式配置-->
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>${pattern}</pattern>
-        </encoder>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+        </layout>
     </appender>
-
+    <logger name="com.ljh" level="TRACE"/>
     <root level="debug">
-        <appender-ref ref="console"/>
+        <appender-ref ref="STDOUT" />
     </root>
 </configuration>

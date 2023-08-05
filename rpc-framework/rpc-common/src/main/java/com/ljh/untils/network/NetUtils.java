@@ -14,7 +14,7 @@ import java.util.Enumeration;
  * @author it楠老师
  * @createTime 2023-06-30
  */
-@Slf4j
+
 public class NetUtils {
     
     public static String getIp() {
@@ -35,15 +35,13 @@ public class NetUtils {
                         continue;
                     }
                     String ipAddress = addr.getHostAddress();
-                    if(log.isDebugEnabled()){
-                        log.debug("局域网IP地址：{}",ipAddress);
-                    }
+
                     return ipAddress;
                 }
             }
             throw new NetworkException();
         } catch (SocketException e) {
-            log.error("获取局域网ip时放生异常。", e);
+
             throw new NetworkException(e);
         }
     }

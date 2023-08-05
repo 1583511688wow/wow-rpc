@@ -9,7 +9,7 @@ import com.ljh.test.HelloRpc;
  *
  * 服务端发布服务
  */
-public class Application {
+public class ProviderApplication {
 
     public static void main(String[] args) {
 

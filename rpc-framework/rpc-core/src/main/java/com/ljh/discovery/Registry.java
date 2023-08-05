@@ -20,12 +20,14 @@ public interface Registry {
      */
     void register(ServiceConfig<?> serviceConfig);
 
-//    /**
-//     * 从注册中心拉取服务列表
-//     * @param serviceName 服务的名称
-//     * @return 服务的地址
-//     */
-//    List<InetSocketAddress> lookup(String serviceName, String group);
-//
+
+
+    /**
+     * 从注册中心拉取服务列表
+     * @param serviceName 服务的名称
+     * @return 服务的地址
+     */
+    InetSocketAddress lookUp(String serviceName);
+
 
 }

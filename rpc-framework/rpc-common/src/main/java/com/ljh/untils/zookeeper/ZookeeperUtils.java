@@ -3,8 +3,10 @@ package com.ljh.untils.zookeeper;
 
 import com.ljh.Constant;
 import com.ljh.exceptions.ZookeeperException;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.zookeeper.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,10 +16,11 @@ import java.util.concurrent.CountDownLatch;
  * @author ljh
  *
  */
-@Slf4j
+
 public class ZookeeperUtils {
-    
-    
+
+    private static final Logger log = LoggerFactory.getLogger(ZookeeperUtils.class);
+
     /**
      * 使用默认配置创建zookeeper实例
      * @return zookeeper实例
@@ -38,6 +41,7 @@ public class ZookeeperUtils {
                 // 只有连接成功才放行
                 if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
                     log.debug("客户端已经连接成功。");
+                    System.out.println("客户端已经连接成功。");
                     countDownLatch.countDown();
                 }
             });

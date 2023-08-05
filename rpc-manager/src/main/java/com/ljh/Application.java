@@ -15,7 +15,7 @@ import static com.ljh.Constant.*;
 /**
  * 管理注册中心
  */
-@Slf4j
+
 public class Application {
 
 
@@ -23,7 +23,7 @@ public class Application {
 
 
         // 创建一个zookeeper实例
-        ZooKeeper zooKeeper =createZookeeper();
+        ZooKeeper zooKeeper =ZookeeperUtils.createZookeeper();
 
         // 定义节点和数据
         String basePath = "/rpc-metadata";

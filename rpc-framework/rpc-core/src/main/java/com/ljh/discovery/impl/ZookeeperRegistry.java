@@ -11,17 +11,21 @@ import com.ljh.untils.zookeeper.ZookeeperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * @author it楠老师
- * @createTime 2023-06-30
+ * @author jjh
+ * @createTime
  */
-@Slf4j
+
 public class ZookeeperRegistry extends AbstractRegistry {
 
+    private static final Logger log = LoggerFactory.getLogger(ZookeeperRegistry.class);
     // 维护一个zk实例
     private ZooKeeper zooKeeper;
 
@@ -58,9 +62,30 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
 
     }
-    
 
+    @Override
+    public InetSocketAddress lookUp(String serviceName) {
 
+        //找到服务对应的节点
+        String serviceNode = Constant.BASE_PROVIDERS_PATH + "/" + serviceName;
+
+        //从zk中获取他的子节点
+        List<String> children = ZookeeperUtils.getChildren(zooKeeper, serviceNode, null);
+        List<InetSocketAddress> collect = children.stream().map(ipString -> {
+
+            String[] ipAndPort = ipString.split(":");
+            String ip = ipAndPort[0];
+            int port = Integer.parseInt(ipAndPort[1]);
+            return new InetSocketAddress(ip, port);
+        }).collect(Collectors.toList());
+
+        if(collect.size() == 0){
+            throw new DiscoveryException("未发现任何可用的服务主机.");
+        }
+
+        //todo: 用负载均衡 缓存 + watcher 寻去一个可用的服务
+        return collect.get(0);
+    }
 
 
 }
