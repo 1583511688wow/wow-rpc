@@ -63,6 +63,12 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
     }
 
+
+    /**
+     * 发现服务，从注册中心，寻找一个可用的服务，传入服务的名字
+     * @param serviceName 服务的名称
+     * @return  IP + 端口
+     */
     @Override
     public InetSocketAddress lookUp(String serviceName) {
 

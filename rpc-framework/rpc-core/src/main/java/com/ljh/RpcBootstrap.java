@@ -1,5 +1,6 @@
 package com.ljh;
 
+import com.ljh.channelHandler.handler.RpcMessageDecoder;
 import com.ljh.discovery.Registry;
 import com.ljh.discovery.RegistryConfig;
 import com.ljh.discovery.impl.Op;
@@ -25,6 +26,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -45,8 +47,10 @@ public class RpcBootstrap {
 
     public final static Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>(16);
     //维护已经发布暴露的服务列表 k -> 接口全限定名  value -> ServiceConfig
-    private static Map<String, ServiceConfig<?>> serviceList = new HashMap<>();
+    private static Map<String, ServiceConfig<?>> serviceList = new ConcurrentHashMap<>();
 
+    //定义全局的 completableFuture
+    public final static Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
     private static RpcBootstrap rpcBootstrap = new RpcBootstrap();
 
@@ -149,18 +153,10 @@ public class RpcBootstrap {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             // 是核心，我们需要添加很多入站和出站的handler
-                            socketChannel.pipeline().addLast(new SimpleChannelInboundHandler() {
-                                @Override
-                                protected void channelRead0(ChannelHandlerContext channelHandlerContext, Object msg) throws Exception {
-                                    ByteBuf byteBuf = (ByteBuf) msg;
-                                    log.info("byteBuf--->{}", byteBuf.toString(Charset.defaultCharset()));
-                                    System.out.println(byteBuf.toString(Charset.defaultCharset()));
-
-
-                                    channelHandlerContext.channel().writeAndFlush(Unpooled.copiedBuffer("你好我来了".getBytes()));
-
-                                }
-                            })
+                            socketChannel.pipeline()
+                                    .addLast(new LoggingHandler())
+                                    //解码器
+                                    .addLast(new RpcMessageDecoder())
 
                             ;
                         }
