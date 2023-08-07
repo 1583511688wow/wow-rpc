@@ -3,6 +3,7 @@ package com.ljh.channelHandler.handler;
 import com.ljh.transport.message.MessageFormatConstant;
 import com.ljh.transport.message.RequestPayload;
 import com.ljh.transport.message.RpcRequest;
+import com.ljh.transport.message.RpcResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -14,14 +15,14 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 /**
- * 出站第一个处理器 自定义编码器 编码 + 序列化
+ * 响应 自定义编码器 编码 + 序列化
  * @author ljh
  */
-public class RpcMessageEncoder extends MessageToByteEncoder<RpcRequest> {
-    private static final Logger log = LoggerFactory.getLogger(RpcMessageEncoder.class);
+public class RpcResponseEncoder extends MessageToByteEncoder<RpcResponse> {
+    private static final Logger log = LoggerFactory.getLogger(RpcResponseEncoder.class);
 
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, RpcRequest rpcRequest, ByteBuf byteBuf) throws Exception {
+    protected void encode(ChannelHandlerContext channelHandlerContext, RpcResponse rpcResponse, ByteBuf byteBuf) throws Exception {
 
 
         //4个字节的魔术值
@@ -34,39 +35,58 @@ public class RpcMessageEncoder extends MessageToByteEncoder<RpcRequest> {
         byteBuf.writeShort(MessageFormatConstant.HEADER_LENGTH);
 
         //不知道body的长度 用writeIndex(写指针记录)
-        byteBuf.writerIndex(byteBuf.writerIndex() + 4);
+        byteBuf.writerIndex(byteBuf.writerIndex() + MessageFormatConstant.FULL_FIELD_LENGTH);
 
         //3个类型
-        byteBuf.writeByte(rpcRequest.getRequestType());
-        byteBuf.writeByte(rpcRequest.getSerializeType());
-        byteBuf.writeByte(rpcRequest.getCompressType());
+        byteBuf.writeByte(rpcResponse.getCode());
+        byteBuf.writeByte(rpcResponse.getSerializeType());
+        byteBuf.writeByte(rpcResponse.getCompressType());
 
         //8字节的请求Id
-        byteBuf.writeLong(rpcRequest.getRequestId());
+        byteBuf.writeLong(rpcResponse.getRequestId());
+
+
+
+
         //写入请求体
-        byte[] bodyBytes = getBodyBytes(rpcRequest.getRequestPayload());
-        byteBuf.writeBytes(bodyBytes);
+        byte[] bodyBytes = getBodyBytes(rpcResponse.getObject());
+        if (bodyBytes != null){
 
+            byteBuf.writeBytes(bodyBytes);
+        }
+
+
+        int bodyLength = bodyBytes == null ? 0 : bodyBytes.length;
         int writerIndex = byteBuf.writerIndex();
-        byteBuf.writerIndex(7);
+        byteBuf.writerIndex(MessageFormatConstant.MAGIC.length + MessageFormatConstant.VERSION_LENGTH +
+                MessageFormatConstant.HEADER_FIELD_LENGTH);
 
-        byteBuf.writeInt(MessageFormatConstant.HEADER_LENGTH + bodyBytes.length);
+        byteBuf.writeInt(MessageFormatConstant.HEADER_LENGTH + bodyLength);
         byteBuf.writerIndex(writerIndex);
+        log.info("请求在服务端【{}】已经完成了报文的编码", rpcResponse.getRequestId());
+
 
     }
 
     /**
      * 获取请求体 字节数组
-     * @param requestPayload
+     * @param body
      * @return
      */
-    private byte[] getBodyBytes(RequestPayload requestPayload) {
+    private byte[] getBodyBytes(Object body) {
+
+        if (body == null){
+
+
+            return null;
+        }
+
 
 
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-            objectOutputStream.writeObject(requestPayload);
+            objectOutputStream.writeObject(body);
             return outputStream.toByteArray();
         } catch (IOException e) {
             log.error("请求体序列化异常");

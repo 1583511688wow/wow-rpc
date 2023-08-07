@@ -1,7 +1,8 @@
 package com.ljh.channelHandler;
 
 import com.ljh.channelHandler.handler.MySimpleChannelInboundHandler;
-import com.ljh.channelHandler.handler.RpcMessageEncoder;
+import com.ljh.channelHandler.handler.RpcRequestEncoder;
+import com.ljh.channelHandler.handler.RpcResponseDecoder;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -20,7 +21,10 @@ public class ConsumerChannelInitializer extends ChannelInitializer<SocketChannel
                 //日志处理器
                 .addLast(new LoggingHandler(LogLevel.DEBUG))
                 //消息编码器
-                .addLast(new RpcMessageEncoder())
+                .addLast(new RpcRequestEncoder())
+                //入栈解码器
+                .addLast(new RpcResponseDecoder())
+                //处理结果
                 .addLast(new MySimpleChannelInboundHandler());
 
     }

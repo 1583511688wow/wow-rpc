@@ -70,6 +70,9 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
                 .serializeType((byte) 1)
                 .requestPayload(requestPayload).build();
 
+        //心跳请求判断
+
+
         //生成future
         CompletableFuture<Object> future = new CompletableFuture<>();
         //todo: 需要拿到返回值 将CompletableFuture暴露出去

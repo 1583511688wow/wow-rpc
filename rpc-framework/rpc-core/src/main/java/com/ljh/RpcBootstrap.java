@@ -1,29 +1,20 @@
 package com.ljh;
 
-import com.ljh.channelHandler.handler.RpcMessageDecoder;
+import com.ljh.channelHandler.handler.MethodCallHandler;
+import com.ljh.channelHandler.handler.RpcRequestDecoder;
+import com.ljh.channelHandler.handler.RpcResponseEncoder;
 import com.ljh.discovery.Registry;
 import com.ljh.discovery.RegistryConfig;
-import com.ljh.discovery.impl.Op;
-import com.ljh.untils.network.NetUtils;
-import com.ljh.untils.zookeeper.ZookeeperNode;
-import com.ljh.untils.zookeeper.ZookeeperUtils;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +38,7 @@ public class RpcBootstrap {
 
     public final static Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>(16);
     //维护已经发布暴露的服务列表 k -> 接口全限定名  value -> ServiceConfig
-    private static Map<String, ServiceConfig<?>> serviceList = new ConcurrentHashMap<>();
+    public static Map<String, ServiceConfig<?>> serviceList = new ConcurrentHashMap<>();
 
     //定义全局的 completableFuture
     public final static Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
@@ -156,7 +147,9 @@ public class RpcBootstrap {
                             socketChannel.pipeline()
                                     .addLast(new LoggingHandler())
                                     //解码器
-                                    .addLast(new RpcMessageDecoder())
+                                    .addLast(new RpcRequestDecoder())
+                                    .addLast(new MethodCallHandler())
+                                    .addLast(new RpcResponseEncoder())
 
                             ;
                         }
