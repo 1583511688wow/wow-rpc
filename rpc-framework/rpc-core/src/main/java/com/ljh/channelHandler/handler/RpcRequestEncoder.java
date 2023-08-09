@@ -1,5 +1,11 @@
 package com.ljh.channelHandler.handler;
 
+import com.ljh.RpcBootstrap;
+import com.ljh.compress.Compressor;
+import com.ljh.compress.CompressorFactory;
+import com.ljh.serialize.Serializer;
+import com.ljh.serialize.SerializerFactory;
+import com.ljh.serialize.SerializerWrapper;
 import com.ljh.transport.message.MessageFormatConstant;
 import com.ljh.transport.message.RequestPayload;
 import com.ljh.transport.message.RpcRequest;
@@ -46,9 +52,14 @@ public class RpcRequestEncoder extends MessageToByteEncoder<RpcRequest> {
 
 
 
+        //序列化
+        Serializer serializer = SerializerFactory.getSerializer(rpcRequest.getSerializeType()).getSerializer();
+        byte[] bodyBytes = serializer.serialize(rpcRequest.getRequestPayload());
 
-        //写入请求体
-        byte[] bodyBytes = getBodyBytes(rpcRequest.getRequestPayload());
+        //压缩
+        Compressor compressor = CompressorFactory.getCompressor(rpcRequest.getCompressType()).getCompressor();
+        bodyBytes = compressor.compress(bodyBytes);
+
         if (bodyBytes != null){
 
             byteBuf.writeBytes(bodyBytes);

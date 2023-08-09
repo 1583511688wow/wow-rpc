@@ -1,6 +1,10 @@
 package com.ljh.channelHandler.handler;
 
+import com.ljh.compress.Compressor;
+import com.ljh.compress.CompressorFactory;
 import com.ljh.enumeration.RequestType;
+import com.ljh.serialize.Serializer;
+import com.ljh.serialize.SerializerFactory;
 import com.ljh.transport.message.MessageFormatConstant;
 import com.ljh.transport.message.RequestPayload;
 import com.ljh.transport.message.RpcRequest;
@@ -113,19 +117,19 @@ public class RpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         byte[] payload = new byte[payloadLength];
         byteBuf.readBytes(payload);
 
+
+        //解压缩
+        Compressor compressor = CompressorFactory.getCompressor(compressType).getCompressor();
+        payload = compressor.decompress(payload);
+
+
+
         //反序列化
 
-        try(ByteArrayInputStream inputStream = new ByteArrayInputStream(payload);
-            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)
-        ) {
-
-            Object o = objectInputStream.readObject();
-            rpcResponse.setObject(o);
-        } catch (IOException  | ClassNotFoundException e) {
-            log.error("报文反序列话发生了异常！！");
-            e.printStackTrace();
-        }
-
+        Serializer serializer = SerializerFactory.getSerializer(rpcResponse.getSerializeType())
+                .getSerializer();
+        Object deserialize = serializer.deserialize(payload, Object.class);
+        rpcResponse.setObject(deserialize);
         log.info("请求在客户端端【{}】已经完成了报文的解码", rpcResponse.getRequestId());
 
         return rpcResponse;

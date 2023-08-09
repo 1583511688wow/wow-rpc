@@ -2,12 +2,15 @@ package com.ljh.proxy;
 
 import com.ljh.ReferenceConfig;
 import com.ljh.RpcBootstrap;
+import com.ljh.compress.CompressorFactory;
 import com.ljh.discovery.Registry;
 import com.ljh.exceptions.DiscoveryException;
 import com.ljh.exceptions.NetworkException;
 import com.ljh.netty.NettyBootstrapInitializer;
+import com.ljh.serialize.SerializerFactory;
 import com.ljh.transport.message.RequestPayload;
 import com.ljh.transport.message.RpcRequest;
+import com.ljh.untils.id.IdGenerator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -47,7 +50,7 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 
         //1.发现服务
         //todo: 我们每次调用相关方法的时候都要去注册中心取拉取列表
-        InetSocketAddress inetSocketAddress = registry.lookUp(interfaceRef.getName());
+        InetSocketAddress inetSocketAddress = RpcBootstrap.LOAD_BALANCER.selectServiceAddress(interfaceRef.getName());
 
 
         //2.建立连接获取通道channel
@@ -64,10 +67,10 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 
 
         RpcRequest rpcRequest = RpcRequest.builder()
-                .requestId(1L)
-                .compressType((byte) 1)
+                .requestId(RpcBootstrap.idGenerator.getId())
+                .compressType(CompressorFactory.getCompressor(RpcBootstrap.COMPRESS_TYPE).getCode())
                 .requestType((byte) 1)
-                .serializeType((byte) 1)
+                .serializeType(SerializerFactory.getSerializer(RpcBootstrap.serializeType).getCode())
                 .requestPayload(requestPayload).build();
 
         //心跳请求判断

@@ -5,6 +5,9 @@ import com.ljh.channelHandler.handler.RpcRequestDecoder;
 import com.ljh.channelHandler.handler.RpcResponseEncoder;
 import com.ljh.discovery.Registry;
 import com.ljh.discovery.RegistryConfig;
+import com.ljh.loadbanlancer.LoadBalancer;
+import com.ljh.loadbanlancer.impl.RoundRobinLoadBalancer;
+import com.ljh.untils.id.IdGenerator;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -27,12 +30,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RpcBootstrap {
 
+    public static final int PORT = 8087;
+    public static  String COMPRESS_TYPE = "gzip";
     private static final Logger log = LoggerFactory.getLogger(RpcBootstrap.class);
 
     // 定义相关的一些基础配置
     private String applicationName = "default";
     private ProtocolConfig protocolConfig;
-    private int port = 8088;
+
+    public static final IdGenerator idGenerator = new IdGenerator(1, 2);
 
     private Registry registry ;
 
@@ -42,6 +48,11 @@ public class RpcBootstrap {
 
     //定义全局的 completableFuture
     public final static Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
+
+    public static String serializeType = "jdk";
+
+
+    public static  LoadBalancer LOAD_BALANCER;
 
     private static RpcBootstrap rpcBootstrap = new RpcBootstrap();
 
@@ -77,6 +88,7 @@ public class RpcBootstrap {
 
         Registry registry = registryConfig.getRegistry();
         this.registry = registry;
+        RpcBootstrap.LOAD_BALANCER = new RoundRobinLoadBalancer();
         return this;
     }
 
@@ -156,7 +168,7 @@ public class RpcBootstrap {
                     });
 
             // 4、绑定端口
-            ChannelFuture channelFuture = serverBootstrap.bind(port).sync();
+            ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
 
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
@@ -175,5 +187,33 @@ public class RpcBootstrap {
 
         reference.setRegistry(registry);
         return this;
+    }
+
+    //配置序列化的方式
+    public RpcBootstrap serialize(String serialize) {
+
+        serializeType = serialize;
+
+
+        log.info("配置的的使用序列化方式为【{}】", serialize);
+
+        return this;
+
+    }
+
+    //配置序列化的方式
+    public RpcBootstrap compress(String compressType) {
+
+        COMPRESS_TYPE = compressType;
+
+
+        log.info("配置的的使用压缩方式为【{}】", compressType);
+
+        return this;
+
+    }
+
+    public Registry getRegistry() {
+        return registry;
     }
 }

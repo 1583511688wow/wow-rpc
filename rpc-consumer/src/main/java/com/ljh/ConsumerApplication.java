@@ -24,15 +24,21 @@ public class ConsumerApplication {
         //传入了应用名，注册中心地址，协议的信息以及服务的信息等。
         RpcBootstrap.getInstance()
                 .application("first-dubbo-consumer")
-                .registry(new RegistryConfig("zookeeper://192.168.123.7:2181"))
+                .registry(new RegistryConfig("zookeeper://192.168.123.8:2181"))
+                .serialize("hessian")
+                .compress("gzip")
                 .reference(reference);
 
         //获取到动态代理的对象并进行调用。
         HelloRpc service = reference.get();
-        String message = service.say("55555-------> 我调用了say接口");
+        for (int i = 0; i < 5; i++){
+            String message = service.say("55555-------> 我调用了say接口");
+            log.info("say方法" + message);
+            System.out.println("say方法" + message);
 
-        log.info("say方法" + message);
-        System.out.println("say方法" + message);
+
+        }
+
 
     }
 }

@@ -1,6 +1,7 @@
 package com.ljh.discovery.impl;
 
 import com.ljh.Constant;
+import com.ljh.RpcBootstrap;
 import com.ljh.ServiceConfig;
 import com.ljh.discovery.AbstractRegistry;
 import com.ljh.exceptions.DiscoveryException;
@@ -52,7 +53,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
 
         //创建本机的临时节点
         //todo: 后续处理端口问题
-        String node = parentNode + "/" + NetUtils.getIp() + ":" + 8088;
+        String node = parentNode + "/" + NetUtils.getIp() + ":" + RpcBootstrap.PORT;
 
         if (!ZookeeperUtils.exists(zooKeeper, node, null)){
             ZookeeperNode zookeeperNode = new ZookeeperNode(node, null);
@@ -70,7 +71,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
      * @return  IP + 端口
      */
     @Override
-    public InetSocketAddress lookUp(String serviceName) {
+    public List<InetSocketAddress> lookUp(String serviceName) {
 
         //找到服务对应的节点
         String serviceNode = Constant.BASE_PROVIDERS_PATH + "/" + serviceName;
@@ -90,7 +91,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         }
 
         //todo: 用负载均衡 缓存 + watcher 寻去一个可用的服务
-        return collect.get(0);
+        return collect;
     }
 
 
