@@ -49,20 +49,28 @@ public class RpcResponseEncoder extends MessageToByteEncoder<RpcResponse> {
         //8字节的请求Id
         byteBuf.writeLong(rpcResponse.getRequestId());
 
+        byteBuf.writeLong(rpcResponse.getTimeStamp());
+
 
 
 
         //序列化 写入请求体
         //byte[] bodyBytes = getBodyBytes(rpcResponse.getObject());
-        Serializer serializer = SerializerFactory.getSerializer(rpcResponse.getSerializeType())
-                .getSerializer();
-        byte[] bodyBytes = serializer.serialize(rpcResponse.getObject());
+
+        byte[] bodyBytes = null;
+        if (rpcResponse.getObject() != null){
+            Serializer serializer = SerializerFactory.getSerializer(rpcResponse.getSerializeType())
+                    .getSerializer();
+            bodyBytes  = serializer.serialize(rpcResponse.getObject());
 
 
-        Compressor compressor = CompressorFactory.getCompressor(rpcResponse.getCompressType()).getCompressor();
-        bodyBytes = compressor.compress(bodyBytes);
+            Compressor compressor = CompressorFactory.getCompressor(rpcResponse.getCompressType()).getCompressor();
+            bodyBytes = compressor.compress(bodyBytes);
 
 
+
+
+        }
 
 
 

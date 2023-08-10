@@ -11,7 +11,7 @@ public interface Selector {
 
     /**
      * 用该算法根据服务列表获取一个节点
-     * @param serviceList
+     * @param
      * @return
      */
     InetSocketAddress getNext();

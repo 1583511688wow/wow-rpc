@@ -1,5 +1,8 @@
 package com.ljh.discovery;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -9,22 +12,15 @@ public class Op {
         CompletableFuture<Integer> future = new CompletableFuture<>();
 
 
-        new Thread(() ->{
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            int i = 9;
-            future.complete(i);
-
-
-        }).start();
-
-        Integer integer = future.get();
-        System.out.println(integer);
-
-
+        String s = "ddsdsds";
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+            System.out.println(md);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        byte[] digest = md.digest(s.getBytes());
+        System.out.println(Arrays.toString(digest));
     }
 }

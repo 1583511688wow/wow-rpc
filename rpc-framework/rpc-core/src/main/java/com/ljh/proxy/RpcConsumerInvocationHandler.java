@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -48,16 +49,9 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-        //1.发现服务
-        //todo: 我们每次调用相关方法的时候都要去注册中心取拉取列表
-        InetSocketAddress inetSocketAddress = RpcBootstrap.LOAD_BALANCER.selectServiceAddress(interfaceRef.getName());
 
 
-        //2.建立连接获取通道channel
-        Channel channel = getAvailableChannel(inetSocketAddress);
-
-
-        //3.封装报文
+        //1.封装报文
         RequestPayload requestPayload = RequestPayload.builder()
                 .interfaceName(interfaceRef.getName())
                 .methodName(method.getName())
@@ -71,7 +65,20 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
                 .compressType(CompressorFactory.getCompressor(RpcBootstrap.COMPRESS_TYPE).getCode())
                 .requestType((byte) 1)
                 .serializeType(SerializerFactory.getSerializer(RpcBootstrap.serializeType).getCode())
+                .timeStamp(new Date().getTime())
                 .requestPayload(requestPayload).build();
+
+
+        RpcBootstrap.REQUEST_THREAD_LOCAL.set(rpcRequest);
+
+
+        //2.发现服务,从注册中心拉取列表，并通过负载均衡的到一个可用的服务
+        InetSocketAddress inetSocketAddress = RpcBootstrap.LOAD_BALANCER.selectServiceAddress(interfaceRef.getName());
+
+
+        //3.建立连接获取通道channel
+        Channel channel = getAvailableChannel(inetSocketAddress);
+
 
         //心跳请求判断
 
@@ -80,7 +87,7 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
         CompletableFuture<Object> future = new CompletableFuture<>();
         //todo: 需要拿到返回值 将CompletableFuture暴露出去
         //放进全局map
-        RpcBootstrap.PENDING_REQUEST.put(1L, future);
+        RpcBootstrap.PENDING_REQUEST.put(rpcRequest.getRequestId(), future);
 
         //向服务端发送消息 报文进入pipeline执行出站
         channel.writeAndFlush(rpcRequest).addListener((ChannelFutureListener) promise -> {
@@ -93,6 +100,7 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 
 
 
+        RpcBootstrap.REQUEST_THREAD_LOCAL.remove();
         //返回等待netty收到的结果，根据全局future
         return future.get(30, TimeUnit.SECONDS);
     }

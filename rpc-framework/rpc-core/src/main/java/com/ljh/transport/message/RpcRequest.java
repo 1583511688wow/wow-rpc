@@ -45,4 +45,10 @@ public class RpcRequest implements Serializable {
     private RequestPayload requestPayload;
 
 
+    /**
+     * 时间戳
+     */
+    private long timeStamp;
+
+
 }

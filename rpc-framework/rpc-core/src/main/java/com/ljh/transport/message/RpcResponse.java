@@ -44,5 +44,11 @@ public class RpcResponse implements Serializable {
      */
     private Object object;
 
+    /**
+     * 时间戳
+     */
+    private long timeStamp;
+
+
 
 }

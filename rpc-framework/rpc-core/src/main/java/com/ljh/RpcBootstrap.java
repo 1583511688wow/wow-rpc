@@ -3,10 +3,13 @@ package com.ljh;
 import com.ljh.channelHandler.handler.MethodCallHandler;
 import com.ljh.channelHandler.handler.RpcRequestDecoder;
 import com.ljh.channelHandler.handler.RpcResponseEncoder;
+import com.ljh.core.HeartBeat;
 import com.ljh.discovery.Registry;
 import com.ljh.discovery.RegistryConfig;
 import com.ljh.loadbanlancer.LoadBalancer;
+import com.ljh.loadbanlancer.impl.ConsistentHashBalancer;
 import com.ljh.loadbanlancer.impl.RoundRobinLoadBalancer;
+import com.ljh.transport.message.RpcRequest;
 import com.ljh.untils.id.IdGenerator;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -20,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,10 +53,16 @@ public class RpcBootstrap {
     //定义全局的 completableFuture
     public final static Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
+
+    public final static TreeMap<Long, Channel> ANSWER_TIME = new TreeMap<>();
+
+
     public static String serializeType = "jdk";
 
 
     public static  LoadBalancer LOAD_BALANCER;
+
+    public static final ThreadLocal<RpcRequest> REQUEST_THREAD_LOCAL = new ThreadLocal<>();
 
     private static RpcBootstrap rpcBootstrap = new RpcBootstrap();
 
@@ -88,7 +98,7 @@ public class RpcBootstrap {
 
         Registry registry = registryConfig.getRegistry();
         this.registry = registry;
-        RpcBootstrap.LOAD_BALANCER = new RoundRobinLoadBalancer();
+            RpcBootstrap.LOAD_BALANCER = new ConsistentHashBalancer();
         return this;
     }
 

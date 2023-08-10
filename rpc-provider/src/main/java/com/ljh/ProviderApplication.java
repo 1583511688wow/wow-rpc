@@ -21,7 +21,7 @@ public class ProviderApplication {
         // 启动 rpc启动器 传入了应用名，注册中心地址，协议的信息以及服务的信息等。
         RpcBootstrap.getInstance()
                 .application("first-dubbo-provider")
-                .registry(new RegistryConfig("zookeeper://192.168.123.8:2181"))
+                .registry(new RegistryConfig("zookeeper://192.168.123.9:2181"))
                 .protocol(new ProtocolConfig("dubbo"))
                 .publish(service)
                 .start();

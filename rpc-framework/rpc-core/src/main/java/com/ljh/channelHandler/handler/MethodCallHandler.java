@@ -2,6 +2,7 @@ package com.ljh.channelHandler.handler;
 
 import com.ljh.RpcBootstrap;
 import com.ljh.ServiceConfig;
+import com.ljh.enumeration.RequestType;
 import com.ljh.transport.message.RequestPayload;
 import com.ljh.transport.message.RespCode;
 import com.ljh.transport.message.RpcRequest;
@@ -28,10 +29,18 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<RpcRequest> {
         //获取负载内容
         RequestPayload payload = rpcRequest.getRequestPayload();
 
-        //根据负载内容进行调用得到结果
-        Object result = callTargetMethod(payload);
+        Object result = null;
 
-        log.info("请求【{}】已经在服务端完成方法调用", rpcRequest.getRequestId());
+        if (! (rpcRequest.getRequestType() == RequestType.HEART_BEAT.getId())){
+
+
+            //根据负载内容进行调用得到结果
+             result = callTargetMethod(payload);
+
+            log.info("请求【{}】已经在服务端完成方法调用", rpcRequest.getRequestId());
+
+
+        }
 
         RpcResponse response = new RpcResponse();
         response.setCode((RespCode.SUCCESS.getCode()));

@@ -96,6 +96,8 @@ public class RpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         // 8、请求id
         long requestId = byteBuf.readLong();
 
+        long timeStamp = byteBuf.readLong();
+
 
 
         // 封装
@@ -104,6 +106,7 @@ public class RpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         rpcResponse.setCompressType(compressType);
         rpcResponse.setSerializeType(serializeType);
         rpcResponse.setRequestId(requestId);
+        rpcResponse.setTimeStamp(timeStamp);
 
 
         //todo 心跳
@@ -118,19 +121,24 @@ public class RpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         byteBuf.readBytes(payload);
 
 
-        //解压缩
-        Compressor compressor = CompressorFactory.getCompressor(compressType).getCompressor();
-        payload = compressor.decompress(payload);
+        if (payload != null && payload.length > 0){
+            //解压缩
+            Compressor compressor = CompressorFactory.getCompressor(compressType).getCompressor();
+            payload = compressor.decompress(payload);
 
 
 
-        //反序列化
+            //反序列化
 
-        Serializer serializer = SerializerFactory.getSerializer(rpcResponse.getSerializeType())
-                .getSerializer();
-        Object deserialize = serializer.deserialize(payload, Object.class);
-        rpcResponse.setObject(deserialize);
-        log.info("请求在客户端端【{}】已经完成了报文的解码", rpcResponse.getRequestId());
+            Serializer serializer = SerializerFactory.getSerializer(rpcResponse.getSerializeType())
+                    .getSerializer();
+            Object deserialize = serializer.deserialize(payload, Object.class);
+            rpcResponse.setObject(deserialize);
+            log.info("请求在客户端端【{}】已经完成了报文的解码", rpcResponse.getRequestId());
+
+
+        }
+
 
         return rpcResponse;
 
