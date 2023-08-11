@@ -13,25 +13,22 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractLoadBalancer implements LoadBalancer{
-    private Registry registry;
+
 
     private static final Logger log = LoggerFactory.getLogger(AbstractLoadBalancer.class);
 
 
     private Map<String, Selector> cache = new ConcurrentHashMap<>(8);
 
-    public AbstractLoadBalancer(){
 
-        this.registry = RpcBootstrap.getInstance().getRegistry();
-
-    }
     @Override
     public InetSocketAddress selectServiceAddress(String serviceName) {
 
         Selector selector = cache.get(serviceName);
         if (selector == null){
 
-            List<InetSocketAddress> socketAddressList = registry.lookUp(serviceName);
+            List<InetSocketAddress> socketAddressList = RpcBootstrap.getInstance()
+                    .getConfiguration().getRegistryConfig().getRegistry().lookUp(serviceName);
 
             selector = getSelector(socketAddressList);
             cache.put(serviceName, selector);
@@ -53,6 +50,10 @@ public abstract class AbstractLoadBalancer implements LoadBalancer{
     protected abstract Selector getSelector(List<InetSocketAddress> socketAddressList);
 
 
-
+    @Override
+    public synchronized void reLoadBalance(String serviceName,List<InetSocketAddress> addresses) {
+        // 我们可以根据新的服务列表生成新的selector
+        cache.put(serviceName,getSelector(addresses));
+    }
 
 }

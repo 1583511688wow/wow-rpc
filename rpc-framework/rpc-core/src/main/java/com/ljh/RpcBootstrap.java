@@ -1,13 +1,16 @@
 package com.ljh;
 
+import com.ljh.annotation.WowApi;
 import com.ljh.channelHandler.handler.MethodCallHandler;
 import com.ljh.channelHandler.handler.RpcRequestDecoder;
 import com.ljh.channelHandler.handler.RpcResponseEncoder;
+import com.ljh.config.Configuration;
 import com.ljh.core.HeartBeat;
 import com.ljh.discovery.Registry;
 import com.ljh.discovery.RegistryConfig;
 import com.ljh.loadbanlancer.LoadBalancer;
 import com.ljh.loadbanlancer.impl.ConsistentHashBalancer;
+import com.ljh.loadbanlancer.impl.MinimumResponseTimeLoadBalancer;
 import com.ljh.loadbanlancer.impl.RoundRobinLoadBalancer;
 import com.ljh.transport.message.RpcRequest;
 import com.ljh.untils.id.IdGenerator;
@@ -20,12 +23,17 @@ import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author ljh
@@ -33,18 +41,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class RpcBootstrap {
-
-    public static final int PORT = 8087;
-    public static  String COMPRESS_TYPE = "gzip";
+    //日志
     private static final Logger log = LoggerFactory.getLogger(RpcBootstrap.class);
+    private static final RpcBootstrap rpcBootstrap = new RpcBootstrap();
 
-    // 定义相关的一些基础配置
-    private String applicationName = "default";
-    private ProtocolConfig protocolConfig;
 
-    public static final IdGenerator idGenerator = new IdGenerator(1, 2);
+    //全局的配置中心
+    private Configuration configuration;
 
-    private Registry registry ;
 
     public final static Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>(16);
     //维护已经发布暴露的服务列表 k -> 接口全限定名  value -> ServiceConfig
@@ -52,21 +56,16 @@ public class RpcBootstrap {
 
     //定义全局的 completableFuture
     public final static Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
-
-
     public final static TreeMap<Long, Channel> ANSWER_TIME = new TreeMap<>();
 
-
-    public static String serializeType = "jdk";
-
-
-    public static  LoadBalancer LOAD_BALANCER;
-
+    // 保存request对象，可以到当前线程中随时获取
     public static final ThreadLocal<RpcRequest> REQUEST_THREAD_LOCAL = new ThreadLocal<>();
 
-    private static RpcBootstrap rpcBootstrap = new RpcBootstrap();
+
 
     public RpcBootstrap() {
+
+         configuration = new Configuration();
     }
 
 
@@ -74,6 +73,10 @@ public class RpcBootstrap {
 
 
         return rpcBootstrap;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
     }
 
 
@@ -84,7 +87,7 @@ public class RpcBootstrap {
      */
     public RpcBootstrap application(String appName) {
 
-        this.applicationName = appName;
+        configuration.setAppName(appName);
         return this;
     }
 
@@ -95,12 +98,23 @@ public class RpcBootstrap {
      */
     public RpcBootstrap registry(RegistryConfig registryConfig) {
 
-
-        Registry registry = registryConfig.getRegistry();
-        this.registry = registry;
-            RpcBootstrap.LOAD_BALANCER = new ConsistentHashBalancer();
+        configuration.setRegistryConfig(registryConfig);
         return this;
     }
+
+
+    /**
+     * 配置负载均衡策略
+     * @param loadBalancer 注册中心
+     * @return this当前实例
+     */
+    public RpcBootstrap loadBalancer(LoadBalancer loadBalancer) {
+        configuration.setLoadBalancer(loadBalancer);
+        return this;
+    }
+
+
+
 
     /**
      * 配置当前暴露的服务使用的协议
@@ -109,7 +123,7 @@ public class RpcBootstrap {
      */
     public RpcBootstrap protocol(ProtocolConfig protocolConfig){
 
-        this.protocolConfig = protocolConfig;
+        configuration.setProtocolConfig(protocolConfig);
 
         if (log.isDebugEnabled()){
 
@@ -128,7 +142,7 @@ public class RpcBootstrap {
     public RpcBootstrap publish(ServiceConfig<?> service) {
 
 
-        registry.register(service);
+        configuration.getRegistryConfig().getRegistry().register(service);
 
         serviceList.put(service.getInterface().getName(), service);
 
@@ -141,7 +155,9 @@ public class RpcBootstrap {
      * @return
      */
     public RpcBootstrap publish(List<ServiceConfig> services) {
-
+        for (ServiceConfig<?> service : services) {
+            this.publish(service);
+        }
         return this;
     }
 
@@ -178,7 +194,7 @@ public class RpcBootstrap {
                     });
 
             // 4、绑定端口
-            ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
+            ChannelFuture channelFuture = serverBootstrap.bind(configuration.getPort()).sync();
 
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
@@ -195,18 +211,18 @@ public class RpcBootstrap {
 
     public RpcBootstrap reference(ReferenceConfig<?> reference) {
 
-        reference.setRegistry(registry);
+        HeartBeat.detectHeartbeat(reference.getInterfaceRef().getName());
+
+        reference.setRegistry(configuration.getRegistryConfig().getRegistry());
         return this;
     }
 
     //配置序列化的方式
     public RpcBootstrap serialize(String serialize) {
 
-        serializeType = serialize;
 
-
+        configuration.setSerializeType(serialize);
         log.info("配置的的使用序列化方式为【{}】", serialize);
-
         return this;
 
     }
@@ -214,16 +230,118 @@ public class RpcBootstrap {
     //配置序列化的方式
     public RpcBootstrap compress(String compressType) {
 
-        COMPRESS_TYPE = compressType;
-
-
+        configuration.setCompressType(compressType);
         log.info("配置的的使用压缩方式为【{}】", compressType);
-
         return this;
 
     }
 
-    public Registry getRegistry() {
-        return registry;
+
+    public RpcBootstrap scan(String packageName) {
+
+        // 1、需要通过packageName获取其下的所有的类的权限定名称
+        List<String> classNames = getAllClassNames(packageName);
+
+
+        // 2、通过反射获取他的接口，构建具体实现
+        List<Class<?>> classes = classNames.stream()
+                .map(className -> {
+                    try {
+                        return Class.forName(className);
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).filter(clazz -> clazz.getAnnotation(WowApi.class) != null)
+                .collect(Collectors.toList());
+
+        for (Class<?> clazz : classes) {
+            // 获取他的接口
+            Class<?>[] interfaces = clazz.getInterfaces();
+            Object instance = null;
+            try {
+                instance = clazz.getConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                    NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+
+//            // 获取分组信息
+//            YrpcApi yrpcApi = clazz.getAnnotation(YrpcApi.class);
+//            String group = yrpcApi.group();
+
+            for (Class<?> anInterface : interfaces) {
+                ServiceConfig<?> serviceConfig = new ServiceConfig<>();
+                serviceConfig.setInterface(anInterface);
+                serviceConfig.setRef(instance);
+                    log.debug("---->已经通过包扫描，将服务【{}】准备发布.",anInterface);
+                // 3、发布
+                publish(serviceConfig);
+                log.debug("---->已经通过包扫描，将服务【{}】发布.",anInterface);
+            }
+
+        }
+        return this;
+
+    }
+
+    private List<String> getAllClassNames(String packageName) {
+
+        // 1、通过packageName获得绝对路径
+        // com.ljhclass.xxx.yyy -> E://xxx/xww/sss/com/ydlclass/xxx/yyy
+        String basePath = packageName.replaceAll("\\.","/");
+        URL url = ClassLoader.getSystemClassLoader().getResource(basePath);
+        if(url == null){
+            throw new RuntimeException("包扫描时，发现路径不存在.");
+        }
+        String absolutePath = url.getPath();
+        //
+        List<String> classNames = new ArrayList<>();
+        classNames = recursionFile(absolutePath,classNames,basePath);
+
+        return classNames;
+
+
+    }
+
+    private List<String> recursionFile(String absolutePath, List<String> classNames, String basePath) {
+
+        // 获取文件
+        File file = new File(absolutePath);
+        // 判断文件是否是文件夹
+        if (file.isDirectory()){
+            // 找到文件夹的所有的文件
+            File[] children = file.listFiles(pathname -> pathname.isDirectory() || pathname.getPath().contains(".class"));
+            if(children == null || children.length == 0){
+                return classNames;
+            }
+            for (File child : children) {
+                if(child.isDirectory()){
+                    // 递归调用
+                    recursionFile(child.getAbsolutePath(),classNames,basePath);
+                } else {
+                    // 文件 --> 类的权限定名称
+                    String className = getClassNameByAbsolutePath(child.getAbsolutePath(),basePath);
+                    classNames.add(className);
+                }
+            }
+
+        } else {
+            // 文件 --> 类的权限定名称
+            String className = getClassNameByAbsolutePath(absolutePath,basePath);
+            classNames.add(className);
+        }
+        return classNames;
+
+    }
+
+    private String getClassNameByAbsolutePath(String absolutePath,String basePath) {
+        // E:\project\ydlclass-yrpc\yrpc-framework\yrpc-core\target\classes\com\ydlclass\serialize\Serializer.class
+        // com\ydlclass\serialize\Serializer.class --> com.ydlclass.serialize.Serializer
+        String fileName = absolutePath
+                .substring(absolutePath.indexOf(basePath.replaceAll("/","\\\\")))
+                .replaceAll("\\\\",".");
+
+        fileName = fileName.substring(0,fileName.indexOf(".class"));
+        return fileName;
     }
 }

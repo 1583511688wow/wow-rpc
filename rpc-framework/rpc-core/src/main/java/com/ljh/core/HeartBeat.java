@@ -13,12 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 心跳检测
@@ -30,7 +29,7 @@ public class HeartBeat {
     public static void detectHeartbeat(String serviceName){
 
         //从注册中心拉取服务列表
-        Registry registry = RpcBootstrap.getInstance().getRegistry();
+        Registry registry = RpcBootstrap.getInstance().getConfiguration().getRegistryConfig().getRegistry();
         List<InetSocketAddress> inetSocketAddresses = registry.lookUp(serviceName);
 
         // 将连接进行缓存
@@ -50,7 +49,7 @@ public class HeartBeat {
         // 3、任务，定期发送消息
         Thread thread = new Thread(() ->
                 new Timer().scheduleAtFixedRate(new MyTimerTask(), 0, 2000)
-                , "rpc-HeartbeatDetector-thread");
+                , "Rpc-HeartbeatDetector-thread");
         thread.setDaemon(true);
         thread.start();
 
@@ -61,61 +60,80 @@ public class HeartBeat {
         @Override
         public void run() {
 
-            //将响应时长的channel清空
+            // 将响应时长的map清空
             RpcBootstrap.ANSWER_TIME.clear();
 
-            Map<InetSocketAddress, Channel> channelCache = RpcBootstrap.CHANNEL_CACHE;
-            for (Map.Entry<InetSocketAddress, Channel> entry : channelCache.entrySet()){
+            // 遍历所有的channel
+            Map<InetSocketAddress, Channel> cache = RpcBootstrap.CHANNEL_CACHE;
+            for (Map.Entry<InetSocketAddress, Channel> entry : cache.entrySet()) {
+                // 定义一个重试的次数
+                int tryTimes = 3;
+                while (tryTimes > 0) {
+                    // 通过心跳检测处理每一个channel
+                    Channel channel = entry.getValue();
 
-                Channel channel = entry.getValue();
+                    long start = System.currentTimeMillis();
+                    // 构建一个心跳请求
+                    RpcRequest rpcRequest = RpcRequest.builder()
+                            .requestId(RpcBootstrap.getInstance().getConfiguration().idGenerator.getId())
+                            .compressType(CompressorFactory.getCompressor(RpcBootstrap.getInstance().getConfiguration().getCompressType()).getCode())
+                            .requestType(RequestType.HEART_BEAT.getId())
+                            .serializeType(SerializerFactory.getSerializer(RpcBootstrap.getInstance().getConfiguration().getSerializeType()).getCode())
+                            .timeStamp(start)
+                            .build();
 
+                    // 4、写出报文
+                    CompletableFuture<Object> completableFuture = new CompletableFuture<>();
+                    // 将 completableFuture 暴露出去
+                    RpcBootstrap.PENDING_REQUEST.put(rpcRequest.getRequestId(), completableFuture);
 
+                    channel.writeAndFlush(rpcRequest).addListener((ChannelFutureListener) promise -> {
+                        if (!promise.isSuccess()) {
+                            completableFuture.completeExceptionally(promise.cause());
+                        }
+                    });
 
-                long start = System.currentTimeMillis();
+                    Long endTime = 0L;
+                    try {
+                        // 阻塞方法，get()方法如果得不到结果，就会一直阻塞
+                        // 我们想不一直阻塞可以添加参数
+                        completableFuture.get(1, TimeUnit.SECONDS);
+                        endTime = System.currentTimeMillis();
+                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                        // 一旦发生问题，需要优先重试
+                        tryTimes --;
+                        log.error("和地址为【{}】的主机连接发生异常.正在进行第【{}】次重试......",
+                                channel.remoteAddress(), 3 - tryTimes);
 
-                // 构建一个心跳请求
-                RpcRequest rpcRequest = RpcRequest.builder()
-                        .requestId(RpcBootstrap.idGenerator.getId())
-                        .compressType(CompressorFactory.getCompressor(RpcBootstrap.COMPRESS_TYPE).getCode())
-                        .requestType(RequestType.HEART_BEAT.getId())
-                        .serializeType(SerializerFactory.getSerializer(RpcBootstrap.serializeType).getCode())
-                        .timeStamp(start)
-                        .build();
+                        // 将重试的机会用尽，将失效的地址移出服务列表
+                        if(tryTimes == 0){
+                            RpcBootstrap.CHANNEL_CACHE.remove(entry.getKey());
+                        }
 
+                        // 尝试等到一段时间后重试
+                        try {
+                            Thread.sleep(10*(new Random().nextInt(5)));
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException(ex);
+                        }
 
-
-                CompletableFuture<Object> future = new CompletableFuture<>();
-                //放进全局map
-                RpcBootstrap.PENDING_REQUEST.put(rpcRequest.getRequestId(), future);
-
-
-                channel.writeAndFlush(rpcRequest).addListener((ChannelFutureListener) promise -> {
-                    //promise返回 writeAndFlush的结果 异常就捕获
-                    if (!promise.isSuccess()){
-
-                        future.completeExceptionally(promise.cause());
+                        continue;
                     }
-                });
+                    Long time = endTime - start;
 
-                Long endTime = null;
-                try {
-                   future.get();
-                    endTime = System.currentTimeMillis();
-                } catch (InterruptedException | ExecutionException e) {
-
-                    e.printStackTrace();
+                    // 使用treemap进行缓存
+                    RpcBootstrap.ANSWER_TIME.put(time, channel);
+                    log.debug("和[{}]服务器的响应时间是[{}].", entry.getKey(), time);
+                    break;
                 }
-
-                Long time = endTime - start;
-
-                //使用treemap进行缓存
-                RpcBootstrap.ANSWER_TIME.put(time, channel);
-                log.info("和[{}]服务器的响应时间是[{}].", entry.getKey(), time);
-
-
             }
 
-
+            log.info("-----------------------响应时间的treemap----------------------");
+            for (Map.Entry<Long, Channel> entry : RpcBootstrap.ANSWER_TIME.entrySet()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("[{}]--->channelId:[{}]", entry.getKey(), entry.getValue().id());
+                }
+            }
         }
     }
 }

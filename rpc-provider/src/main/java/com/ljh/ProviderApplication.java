@@ -23,7 +23,8 @@ public class ProviderApplication {
                 .application("first-dubbo-provider")
                 .registry(new RegistryConfig("zookeeper://192.168.123.9:2181"))
                 .protocol(new ProtocolConfig("dubbo"))
-                .publish(service)
+//                .publish(service)
+                .scan("com.ljh")
                 .start();
     }
 }

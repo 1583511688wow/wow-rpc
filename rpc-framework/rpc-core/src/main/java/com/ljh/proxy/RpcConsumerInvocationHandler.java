@@ -4,6 +4,7 @@ import com.ljh.ReferenceConfig;
 import com.ljh.RpcBootstrap;
 import com.ljh.compress.CompressorFactory;
 import com.ljh.discovery.Registry;
+import com.ljh.enumeration.RequestType;
 import com.ljh.exceptions.DiscoveryException;
 import com.ljh.exceptions.NetworkException;
 import com.ljh.netty.NettyBootstrapInitializer;
@@ -61,20 +62,25 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 
 
         RpcRequest rpcRequest = RpcRequest.builder()
-                .requestId(RpcBootstrap.idGenerator.getId())
-                .compressType(CompressorFactory.getCompressor(RpcBootstrap.COMPRESS_TYPE).getCode())
-                .requestType((byte) 1)
-                .serializeType(SerializerFactory.getSerializer(RpcBootstrap.serializeType).getCode())
+                .requestId(RpcBootstrap.getInstance().getConfiguration().getIdGenerator().getId())
+                .compressType(CompressorFactory.getCompressor(RpcBootstrap.getInstance().getConfiguration().getCompressType()).getCode())
+                .requestType(RequestType.REQUEST.getId())
+                .serializeType(SerializerFactory.getSerializer(RpcBootstrap.getInstance().getConfiguration().getSerializeType()).getCode())
                 .timeStamp(new Date().getTime())
                 .requestPayload(requestPayload).build();
+
 
 
         RpcBootstrap.REQUEST_THREAD_LOCAL.set(rpcRequest);
 
 
         //2.发现服务,从注册中心拉取列表，并通过负载均衡的到一个可用的服务
-        InetSocketAddress inetSocketAddress = RpcBootstrap.LOAD_BALANCER.selectServiceAddress(interfaceRef.getName());
-
+        InetSocketAddress inetSocketAddress = RpcBootstrap.getInstance().getConfiguration().getLoadBalancer()
+        .selectServiceAddress(interfaceRef.getName());
+        if (log.isDebugEnabled()) {
+            log.debug("服务调用方，发现了服务【{}】的可用主机【{}】.",
+                    interfaceRef.getName(), inetSocketAddress);
+        }
 
         //3.建立连接获取通道channel
         Channel channel = getAvailableChannel(inetSocketAddress);

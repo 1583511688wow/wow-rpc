@@ -9,6 +9,7 @@ import com.ljh.untils.network.NetUtils;
 import com.ljh.untils.zookeeper.ZookeeperNode;
 import com.ljh.untils.zookeeper.ZookeeperUtils;
 
+import com.ljh.watch.UpAndDownWatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
@@ -52,8 +53,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         }
 
         //创建本机的临时节点
-        //todo: 后续处理端口问题
-        String node = parentNode + "/" + NetUtils.getIp() + ":" + RpcBootstrap.PORT;
+        String node = parentNode + "/" + NetUtils.getIp() + ":" + RpcBootstrap.getInstance().getConfiguration().getPort();
 
         if (!ZookeeperUtils.exists(zooKeeper, node, null)){
             ZookeeperNode zookeeperNode = new ZookeeperNode(node, null);
@@ -77,7 +77,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         String serviceNode = Constant.BASE_PROVIDERS_PATH + "/" + serviceName;
 
         //从zk中获取他的子节点
-        List<String> children = ZookeeperUtils.getChildren(zooKeeper, serviceNode, null);
+        List<String> children = ZookeeperUtils.getChildren(zooKeeper, serviceNode, new UpAndDownWatcher());
         List<InetSocketAddress> collect = children.stream().map(ipString -> {
 
             String[] ipAndPort = ipString.split(":");
