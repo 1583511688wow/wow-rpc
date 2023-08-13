@@ -1,8 +1,8 @@
 package com.ljh.exceptions;
 
 /**
- * @author it楠老师
- * @createTime 2023-06-29
+ * @author ljh
+ *
  */
 public class NetworkException extends RuntimeException{
     

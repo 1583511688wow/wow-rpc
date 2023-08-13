@@ -11,10 +11,9 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 /**
- * @author it楠老师
- * @createTime 2023-06-30
+ * @author ljh
+ *
  */
-
 public class NetUtils {
     
     public static String getIp() {

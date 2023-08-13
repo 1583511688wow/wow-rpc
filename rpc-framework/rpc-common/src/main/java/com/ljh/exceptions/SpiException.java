@@ -1,8 +1,8 @@
 package com.ljh.exceptions;
 
 /**
- * @author it楠老师
- * @createTime 2023-07-20
+ * @author ljh
+ *
  */
 public class SpiException extends RuntimeException {
     
