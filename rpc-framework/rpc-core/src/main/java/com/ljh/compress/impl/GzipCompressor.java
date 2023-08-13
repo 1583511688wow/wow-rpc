@@ -1,10 +1,8 @@
-package com.ljh.compress.Impl;
+package com.ljh.compress.impl;
 
 import com.ljh.compress.Compressor;
 
 import com.ljh.exceptions.CompressException;
-import com.ljh.serialize.Impl.HessianSerializer;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

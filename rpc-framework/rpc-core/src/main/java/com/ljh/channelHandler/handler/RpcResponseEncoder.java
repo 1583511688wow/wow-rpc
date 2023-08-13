@@ -60,11 +60,11 @@ public class RpcResponseEncoder extends MessageToByteEncoder<RpcResponse> {
         byte[] bodyBytes = null;
         if (rpcResponse.getObject() != null){
             Serializer serializer = SerializerFactory.getSerializer(rpcResponse.getSerializeType())
-                    .getSerializer();
+                    .getImpl();
             bodyBytes  = serializer.serialize(rpcResponse.getObject());
 
 
-            Compressor compressor = CompressorFactory.getCompressor(rpcResponse.getCompressType()).getCompressor();
+            Compressor compressor = CompressorFactory.getCompressor(rpcResponse.getCompressType()).getImpl();
             bodyBytes = compressor.compress(bodyBytes);
 
 

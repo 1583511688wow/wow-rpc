@@ -1,9 +1,6 @@
-package com.ljh.loadbanlancer;
+package com.ljh.loadbalancer;
 
 import com.ljh.RpcBootstrap;
-import com.ljh.discovery.Registry;
-import com.ljh.discovery.impl.ZookeeperRegistry;
-import com.ljh.loadbanlancer.impl.RoundRobinLoadBalancer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

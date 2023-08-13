@@ -1,4 +1,4 @@
-package com.ljh.serialize.Impl;
+package com.ljh.serialize.impl;
 
 import com.ljh.exceptions.SerializeException;
 import com.ljh.serialize.Serializer;

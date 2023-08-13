@@ -2,11 +2,10 @@ package com.ljh.watch;
 
 import com.ljh.RpcBootstrap;
 import com.ljh.discovery.Registry;
-import com.ljh.loadbanlancer.LoadBalancer;
+import com.ljh.loadbalancer.LoadBalancer;
 import com.ljh.netty.NettyBootstrapInitializer;
 
 import io.netty.channel.Channel;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;

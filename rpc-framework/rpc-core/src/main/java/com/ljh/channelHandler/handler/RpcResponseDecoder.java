@@ -123,7 +123,7 @@ public class RpcResponseDecoder extends LengthFieldBasedFrameDecoder {
 
         if (payload != null && payload.length > 0){
             //解压缩
-            Compressor compressor = CompressorFactory.getCompressor(compressType).getCompressor();
+            Compressor compressor = CompressorFactory.getCompressor(compressType).getImpl();
             payload = compressor.decompress(payload);
 
 
@@ -131,7 +131,7 @@ public class RpcResponseDecoder extends LengthFieldBasedFrameDecoder {
             //反序列化
 
             Serializer serializer = SerializerFactory.getSerializer(rpcResponse.getSerializeType())
-                    .getSerializer();
+                    .getImpl();
             Object deserialize = serializer.deserialize(payload, Object.class);
             rpcResponse.setObject(deserialize);
             log.info("请求在客户端端【{}】已经完成了报文的解码", rpcResponse.getRequestId());

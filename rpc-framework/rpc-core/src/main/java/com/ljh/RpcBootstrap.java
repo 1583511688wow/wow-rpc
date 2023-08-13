@@ -6,14 +6,9 @@ import com.ljh.channelHandler.handler.RpcRequestDecoder;
 import com.ljh.channelHandler.handler.RpcResponseEncoder;
 import com.ljh.config.Configuration;
 import com.ljh.core.HeartBeat;
-import com.ljh.discovery.Registry;
 import com.ljh.discovery.RegistryConfig;
-import com.ljh.loadbanlancer.LoadBalancer;
-import com.ljh.loadbanlancer.impl.ConsistentHashBalancer;
-import com.ljh.loadbanlancer.impl.MinimumResponseTimeLoadBalancer;
-import com.ljh.loadbanlancer.impl.RoundRobinLoadBalancer;
+import com.ljh.loadbalancer.LoadBalancer;
 import com.ljh.transport.message.RpcRequest;
-import com.ljh.untils.id.IdGenerator;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -116,23 +111,7 @@ public class RpcBootstrap {
 
 
 
-    /**
-     * 配置当前暴露的服务使用的协议
-     * @param protocolConfig
-     * @return
-     */
-    public RpcBootstrap protocol(ProtocolConfig protocolConfig){
 
-        configuration.setProtocolConfig(protocolConfig);
-
-        if (log.isDebugEnabled()){
-
-        log.info("当前工程使用了jdk");
-
-        }
-
-        return this;
-    }
 
     /**
      * 单个发布服务
@@ -336,7 +315,7 @@ public class RpcBootstrap {
 
     private String getClassNameByAbsolutePath(String absolutePath,String basePath) {
         // E:\project\ydlclass-yrpc\yrpc-framework\yrpc-core\target\classes\com\ydlclass\serialize\Serializer.class
-        // com\ydlclass\serialize\Serializer.class --> com.ydlclass.serialize.Serializer
+        // com\ydlclass\serialize\Serializer.class --> com.ljh.serialize.Serializer
         String fileName = absolutePath
                 .substring(absolutePath.indexOf(basePath.replaceAll("/","\\\\")))
                 .replaceAll("\\\\",".");

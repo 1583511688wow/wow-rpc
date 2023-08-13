@@ -1,7 +1,6 @@
-package com.ljh.loadbanlancer;
+package com.ljh.loadbalancer;
 
 import java.net.InetSocketAddress;
-import java.util.List;
 
 /**
  * 负载均衡算法接口

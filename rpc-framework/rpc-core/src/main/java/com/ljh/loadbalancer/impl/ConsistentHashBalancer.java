@@ -1,8 +1,8 @@
-package com.ljh.loadbanlancer.impl;
+package com.ljh.loadbalancer.impl;
 
 import com.ljh.RpcBootstrap;
-import com.ljh.loadbanlancer.AbstractLoadBalancer;
-import com.ljh.loadbanlancer.Selector;
+import com.ljh.loadbalancer.AbstractLoadBalancer;
+import com.ljh.loadbalancer.Selector;
 import com.ljh.transport.message.RpcRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

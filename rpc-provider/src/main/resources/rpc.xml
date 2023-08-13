@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration SYSTEM "http://ljh.com/rpc-config.dtd">
+
+<configuration >
+
+    <port>7777</port>
+    <appName>rpc-default-appName</appName>
+    <registry url="zookeeper://127.0.0.1:2181"/>
+
+    <!-- 二选一 -->
+    <serializeType type="hessian"/>
+    <serializer class="com.ljh.serialize.impl.HessianSerializer" name="hessian" code="3"/>
+
+
+    <!-- 二选一 -->
+    <compressType type="gzip"/>
+    <compressor code="1" name="gzip"  class="com.ljh.compress.impl.GzipCompressor"/>
+
+
+    <!-- 二选一 -->
+    <loadBalancer class="com.ljh.loadbalancer.impl.MinimumResponseTimeLoadBalancer"/>
+    <loadBalancerType type="minimumResponseTime"/>
+
+    <idGenerator class="com.ljh.untils.id.IdGenerator" dataCenterId="2" MachineId="4"/>
+
+
+</configuration>

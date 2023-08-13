@@ -1,4 +1,4 @@
-package com.ljh.serialize.Impl;
+package com.ljh.serialize.impl;
 
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;

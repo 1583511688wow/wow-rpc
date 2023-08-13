@@ -1,0 +1,4 @@
+3-hessian-com.ljh.serialize.impl.HessianSerializer
+2-jdk-com.ljh.serialize.impl.JsonSerializer
+1-jdk-com.ljh.serialize.impl.JdkSerializer
+

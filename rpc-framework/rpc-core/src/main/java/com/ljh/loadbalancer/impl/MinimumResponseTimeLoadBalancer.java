@@ -1,9 +1,9 @@
-package com.ljh.loadbanlancer.impl;
+package com.ljh.loadbalancer.impl;
 
 
 import com.ljh.RpcBootstrap;
-import com.ljh.loadbanlancer.AbstractLoadBalancer;
-import com.ljh.loadbanlancer.Selector;
+import com.ljh.loadbalancer.AbstractLoadBalancer;
+import com.ljh.loadbalancer.Selector;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 
