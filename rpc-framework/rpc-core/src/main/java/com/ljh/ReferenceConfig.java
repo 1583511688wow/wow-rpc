@@ -30,6 +30,7 @@ public class ReferenceConfig<T> {
 
 
     private Registry registry;
+    private String group;
 
     public Registry getRegistry() {
         return registry;
@@ -56,8 +57,17 @@ public class ReferenceConfig<T> {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         Class<T>[] calsses = new Class[]{interfaceRef};
         Object result = Proxy.newProxyInstance(contextClassLoader, calsses,
-                new RpcConsumerInvocationHandler(registry, interfaceRef));
+                new RpcConsumerInvocationHandler(registry, interfaceRef, group));
 
         return (T)result;
+    }
+
+    public void setGroup(String group) {
+
+        this.group = group;
+    }
+
+    public String getGroup() {
+        return group;
     }
 }

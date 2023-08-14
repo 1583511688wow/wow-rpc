@@ -6,11 +6,17 @@ import com.ljh.compress.impl.GzipCompressor;
 import com.ljh.discovery.RegistryConfig;
 import com.ljh.loadbalancer.LoadBalancer;
 import com.ljh.loadbalancer.impl.MinimumResponseTimeLoadBalancer;
+import com.ljh.protection.CircuitBreaker;
+import com.ljh.protection.RateLimiter;
 import com.ljh.serialize.Serializer;
 import com.ljh.serialize.impl.JdkSerializer;
 import com.ljh.untils.id.IdGenerator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
+import java.net.SocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 全局的配置类，代码配置-->xml配置-->默认项
@@ -23,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Configuration {
 
     // 配置信息-->端口号
-    private int port = 8094;
+    private int port = 8011;
 
     // 配置信息-->应用程序的名字
     private String appName = "default";
@@ -50,6 +56,11 @@ public class Configuration {
 
     private Serializer serializer = new JdkSerializer();
 
+
+    // 为每一个ip配置一个限流器
+    private final Map<SocketAddress, RateLimiter> everyIpRateLimiter = new ConcurrentHashMap<>(16);
+    // 为每一个ip配置一个断路器，熔断
+    private final Map<SocketAddress, CircuitBreaker> everyIpCircuitBreaker = new ConcurrentHashMap<>(16);
 
 
 

@@ -14,7 +14,7 @@ public interface LoadBalancer {
      * @param serviceName
      * @return
      */
-    InetSocketAddress selectServiceAddress(String serviceName);
+    InetSocketAddress selectServiceAddress(String serviceName, String group);
 
 
     /**

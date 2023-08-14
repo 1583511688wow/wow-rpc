@@ -30,7 +30,7 @@ public class HeartBeat {
 
         //从注册中心拉取服务列表
         Registry registry = RpcBootstrap.getInstance().getConfiguration().getRegistryConfig().getRegistry();
-        List<InetSocketAddress> inetSocketAddresses = registry.lookUp(serviceName);
+        List<InetSocketAddress> inetSocketAddresses = registry.lookUp(serviceName, RpcBootstrap.getInstance().getConfiguration().getGroup());
 
         // 将连接进行缓存
         for (InetSocketAddress address : inetSocketAddresses) {

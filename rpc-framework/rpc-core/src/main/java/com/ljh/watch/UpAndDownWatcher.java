@@ -33,7 +33,7 @@ public class UpAndDownWatcher implements Watcher {
             }
             String serviceName = getServiceName(event.getPath());
             Registry registry = RpcBootstrap.getInstance().getConfiguration().getRegistryConfig().getRegistry();
-            List<InetSocketAddress> addresses = registry.lookUp(serviceName);
+            List<InetSocketAddress> addresses = registry.lookUp(serviceName, RpcBootstrap.getInstance().getConfiguration().getGroup());
             // 处理新增的节点
             for (InetSocketAddress address : addresses) {
                 // 新增的节点   会在address 不在CHANNEL_CACHE
@@ -67,6 +67,6 @@ public class UpAndDownWatcher implements Watcher {
     
     private String getServiceName(String path) {
         String[] split = path.split("/");
-        return split[split.length - 1];
+        return split[split.length - 2];
     }
 }

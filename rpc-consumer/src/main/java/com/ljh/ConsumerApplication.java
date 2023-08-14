@@ -30,11 +30,12 @@ public class ConsumerApplication {
                 .registry(new RegistryConfig("zookeeper://192.168.123.9:2181"))
                 .serialize("hessian")
                 .compress("gzip")
+                .group("primary")
                 .reference(reference);
 
         //获取到动态代理的对象并进行调用。
           HelloRpc service = reference.get();
-        for (int i = 0; i < 100000000; i++){
+        for (int i = 0; i < 5; i++){
             String message = service.say("55555-------> 我调用了say接口");
             log.info("say方法" + message);
             System.out.println("say方法" + message);

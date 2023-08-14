@@ -3,7 +3,7 @@
 
 <configuration >
 
-    <port>7771</port>
+    <port>7777</port>
     <appName>rpc-default-appName</appName>
     <registry url="zookeeper://127.0.0.1:2181"/>
 

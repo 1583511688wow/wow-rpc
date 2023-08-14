@@ -1,4 +1,4 @@
-package com.ljh.Impl;
+package com.ljh.impl;
 
 import com.ljh.annotation.WowApi;
 import com.ljh.test.HelloRpc;

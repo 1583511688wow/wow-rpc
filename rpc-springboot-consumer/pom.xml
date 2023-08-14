@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rpc-consumer</artifactId>
+    <artifactId>rpc-springboot-consumer</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -18,18 +18,11 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>2.7.5</version>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.zookeeper</groupId>
-            <artifactId>zookeeper</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>com.ljh</groupId>
             <artifactId>rpc-api</artifactId>
@@ -41,8 +34,11 @@
             <artifactId>rpc-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>com.ljh</groupId>
+            <artifactId>rpc-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -54,8 +50,6 @@
             <artifactId>logback-classic</artifactId>
             <version>1.1.7</version>
         </dependency>
-
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
@@ -63,6 +57,5 @@
         </dependency>
 
     </dependencies>
-
 
 </project>

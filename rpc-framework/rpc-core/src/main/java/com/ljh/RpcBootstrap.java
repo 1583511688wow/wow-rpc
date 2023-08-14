@@ -6,6 +6,7 @@ import com.ljh.channelHandler.handler.RpcRequestDecoder;
 import com.ljh.channelHandler.handler.RpcResponseEncoder;
 import com.ljh.config.Configuration;
 import com.ljh.core.HeartBeat;
+import com.ljh.core.RpcShutdownHook;
 import com.ljh.discovery.RegistryConfig;
 import com.ljh.loadbalancer.LoadBalancer;
 import com.ljh.transport.message.RpcRequest;
@@ -146,6 +147,8 @@ public class RpcBootstrap {
     public void start() {
 
 
+        //注册程序关闭钩子函数
+        Runtime.getRuntime().addShutdownHook(new RpcShutdownHook());
 
         // 1、创建eventLoop，老板只负责处理请求，之后会将请求分发至worker
         EventLoopGroup boss = new NioEventLoopGroup(2);
@@ -193,6 +196,7 @@ public class RpcBootstrap {
         HeartBeat.detectHeartbeat(reference.getInterfaceRef().getName());
 
         reference.setRegistry(configuration.getRegistryConfig().getRegistry());
+        reference.setGroup(this.getConfiguration().getGroup());
         return this;
     }
 
@@ -244,14 +248,15 @@ public class RpcBootstrap {
                 throw new RuntimeException(e);
             }
 
-//            // 获取分组信息
-//            YrpcApi yrpcApi = clazz.getAnnotation(YrpcApi.class);
-//            String group = yrpcApi.group();
+            // 获取分组信息
+            WowApi wowApi = clazz.getAnnotation(WowApi.class);
+            String group = wowApi.group();
 
             for (Class<?> anInterface : interfaces) {
                 ServiceConfig<?> serviceConfig = new ServiceConfig<>();
                 serviceConfig.setInterface(anInterface);
                 serviceConfig.setRef(instance);
+                serviceConfig.setGroup(group);
                     log.debug("---->已经通过包扫描，将服务【{}】准备发布.",anInterface);
                 // 3、发布
                 publish(serviceConfig);
@@ -322,5 +327,15 @@ public class RpcBootstrap {
 
         fileName = fileName.substring(0,fileName.indexOf(".class"));
         return fileName;
+    }
+
+    public RpcBootstrap group(String primary) {
+
+        this.getConfiguration().setGroup(primary);
+
+
+
+        return this;
+
     }
 }

@@ -19,13 +19,13 @@ public abstract class AbstractLoadBalancer implements LoadBalancer{
 
 
     @Override
-    public InetSocketAddress selectServiceAddress(String serviceName) {
+    public InetSocketAddress selectServiceAddress(String serviceName ,String group) {
 
         Selector selector = cache.get(serviceName);
         if (selector == null){
 
             List<InetSocketAddress> socketAddressList = RpcBootstrap.getInstance()
-                    .getConfiguration().getRegistryConfig().getRegistry().lookUp(serviceName);
+                    .getConfiguration().getRegistryConfig().getRegistry().lookUp(serviceName, group);
 
             selector = getSelector(socketAddressList);
             cache.put(serviceName, selector);

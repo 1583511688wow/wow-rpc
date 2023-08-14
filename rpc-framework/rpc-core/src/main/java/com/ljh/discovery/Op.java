@@ -9,18 +9,12 @@ import java.util.concurrent.ExecutionException;
 public class Op {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
 
-        CompletableFuture<Integer> future = new CompletableFuture<>();
+        while (true){
+
+            System.out.println("fdf");
 
 
-        String s = "ddsdsds";
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("MD5");
-            System.out.println(md);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        byte[] digest = md.digest(s.getBytes());
-        System.out.println(Arrays.toString(digest));
-    }
+            return;
+
+        }    }
 }
